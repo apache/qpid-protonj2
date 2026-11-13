@@ -18,6 +18,8 @@
 package org.apache.qpid.protonj2.buffer.netty;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.qpid.protonj2.buffer.ProtonBuffer;
 import org.apache.qpid.protonj2.buffer.ProtonBufferAllocator;
@@ -37,9 +39,38 @@ class Netty4ProtonBufferAdapterTest extends NettyBufferAdapterTestBase {
         return new Netty4ProtonBufferAllocator(UnpooledByteBufAllocator.DEFAULT);
     }
 
+    /**
+     * The test here overrides the base test because netty allocates its buffers using
+     * an algorithm that we cannot fully control without significant effort which is not
+     * generally worth the small behavioral difference. This test capture the behavior as
+     * it stands now and will fail in the future if we choose to attempt to address this
+     * difference.
+     */
+    @Test
     @Override
     public void testEnsureWritableCanGrowBeyondImplicitCapacityLimit() {
-        // Netty 4 buffer allocates more than needed in ensureWritable
+        try (ProtonBufferAllocator allocator = createTestCaseAllocator();
+             ProtonBuffer buf = allocator.allocate(8).implicitGrowthLimit(8)) {
+
+            buf.writeLong(0x0102030405060708L);
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.writeByte((byte) 1));
+
+            buf.ensureWritable(8);
+
+            // The resize rounds up well past the request, and the extra room is usable, but the
+            // limit itself is retained and imposed again once the extra room is used up.
+            assertTrue(buf.capacity() > 16, "netty resized the buffer to capacity " + buf.capacity());
+            assertEquals(8, buf.implicitGrowthLimit());
+
+            buf.writeLong(0x0807060504030201L);
+
+            while (buf.getWritableBytes() > 0) {
+                buf.writeByte((byte) 2);
+            }
+
+            assertThrows(IndexOutOfBoundsException.class, () -> buf.writeByte((byte) 1));
+            assertEquals(8, buf.implicitGrowthLimit());
+        }
     }
 
     @Test

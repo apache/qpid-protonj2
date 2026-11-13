@@ -61,7 +61,7 @@ public final class ProtonByteArrayBuffer extends SharedResource<ProtonBuffer> im
     private int arrayOffset;
 
     /**
-     * Tracks the readable capacity of this buffer.  This value is calculated based on
+     * Tracks the readable capacity of this buffer. This value is calculated based on
      * the given target array and the offset value at create time plus any create time
      * restriction that limits the usable sub-region of the array to less than the total
      * length minus the offset
@@ -69,7 +69,7 @@ public final class ProtonByteArrayBuffer extends SharedResource<ProtonBuffer> im
     private int readCapacity;
 
     /**
-     * Tracks the read capacity for buffers that are both readable and writable and is
+     * Tracks the write capacity for buffers that are both readable and writable and is
      * set to the closed state for a buffer than has been made read only.
      */
     private int writeCapacity;
@@ -170,6 +170,9 @@ public final class ProtonByteArrayBuffer extends SharedResource<ProtonBuffer> im
      * 		The offset into the backing array where the buffer starts.
      * @param implicitGrowthLimit
      *      The maximum to which this buffer can grow implicitly (without calls to ensureWritable).
+     *
+     * @throws IndexOutOfBoundsException if {@code arrayOffset} is negative or exceeds the length of the backing array
+     * @throws IllegalArgumentException if {@code implicitGrowthLimit} is negative
      */
     public ProtonByteArrayBuffer(byte[] backingArray, int arrayOffset, int implicitGrowthLimit) {
         this(backingArray, arrayOffset, backingArray.length - arrayOffset, implicitGrowthLimit);
@@ -179,6 +182,10 @@ public final class ProtonByteArrayBuffer extends SharedResource<ProtonBuffer> im
      * Create a new proton byte buffer instance with given backing array as the
      * starting backing store and uses the provided max capacity value to control
      * how large the buffer could ever grow.
+     * <p>
+     * If the implicit growth limit is set less than or equal to capacity the buffer
+     * implicit growth feature is disabled and users must call {@link #ensureWritable(int)}
+     * to increase the buffer capacity.
      *
      * @param backingArray
      * 		The byte array that will back the buffer instance
@@ -188,8 +195,24 @@ public final class ProtonByteArrayBuffer extends SharedResource<ProtonBuffer> im
      *      The capacity limit for this view of the provided backing array.
      * @param implicitGrowthLimit
      *      The maximum to which this buffer can grow implicitly (without calls to ensureWritable).
+     *
+     * @throws IndexOutOfBoundsException if {@code arrayOffset} or {@code capacity} is negative, or if the span
+     *         {@code arrayOffset + capacity} extends beyond the end of the backing array
+     * @throws IllegalArgumentException if {@code implicitGrowthLimit} is negative
      */
     public ProtonByteArrayBuffer(byte[] backingArray, int arrayOffset, int capacity, int implicitGrowthLimit) {
+        if (arrayOffset < 0) {
+            throw new IndexOutOfBoundsException("Array offset cannot be assigned as a negative number");
+        }
+
+        if (capacity < 0) {
+            throw new IndexOutOfBoundsException("Buffer capacity cannot be assigned as a negative number");
+        }
+
+        if (implicitGrowthLimit < 0) {
+            throw new IllegalArgumentException("Buffer implicit growth limit cannot be assigned as a negative number");
+        }
+
         if (arrayOffset > backingArray.length) {
             throw new IndexOutOfBoundsException("Array offset cannot exceed the array length");
         }
@@ -520,7 +543,7 @@ public final class ProtonByteArrayBuffer extends SharedResource<ProtonBuffer> im
         final ProtonByteArrayBuffer result;
 
         if (readOnly && isReadOnly()) {
-            result = new ProtonByteArrayBuffer(array, offset(offset), length, implicitGrowthLimit);
+            result = new ProtonByteArrayBuffer(array, offset(offset), length, ProtonBufferUtils.MAX_BUFFER_CAPACITY);
             result.writeOffset = length;
         } else {
             checkGet(offset, length);
@@ -647,7 +670,7 @@ public final class ProtonByteArrayBuffer extends SharedResource<ProtonBuffer> im
         if (writeCapacity == CLOSED_MARKER) {
             throw ProtonBufferUtils.genericBufferIsReadOnly(this);
         }
-        if (getWritableBytes() > size) {
+        if (getWritableBytes() >= size) {
             return this;
         }
         if (allowCompaction && getWritableBytes() + getReadOffset() >= size) {
@@ -705,8 +728,8 @@ public final class ProtonByteArrayBuffer extends SharedResource<ProtonBuffer> im
             return 0;
         }
 
-        final ByteBuffer ioWrapper = ByteBuffer.wrap(array, readOffset, writableBytes);
-        final int actualWrite = channel.write(ioWrapper);
+        final ByteBuffer ioWrapper = ByteBuffer.wrap(array, arrayOffset + readOffset, writableBytes);
+        final int actualWrite = channel.write(ioWrapper.slice());
         readOffset += actualWrite;
 
         return actualWrite;
@@ -826,22 +849,42 @@ public final class ProtonByteArrayBuffer extends SharedResource<ProtonBuffer> im
 
     @Override
     public byte[] getReadableArray() {
-        return array;
+        ProtonBufferUtils.checkIsClosed(this);
+
+        if (hasReadbleArray()) {
+            return array;
+        } else {
+            throw new UnsupportedOperationException("The buffer does not have a readable array");
+        }
     }
 
     @Override
     public int getReadableArrayOffset() {
-        return arrayOffset + readOffset;
+        if (hasReadbleArray()) {
+            return arrayOffset + readOffset;
+        } else {
+            return 0;
+        }
     }
 
     @Override
     public int getReadableArrayLength() {
-        return writeOffset - readOffset;
+        if (hasReadbleArray()) {
+            return getReadableBytes();
+        } else {
+            return 0;
+        }
     }
 
     @Override
     public ByteBuffer getReadableBuffer() {
-        return ByteBuffer.wrap(array, arrayOffset + readOffset, readCapacity - readOffset).asReadOnlyBuffer();
+        ProtonBufferUtils.checkIsClosed(this);
+
+        if (getReadableBytes() <= 0) {
+            return ByteBuffer.allocate(0).asReadOnlyBuffer();
+        } else {
+            return ByteBuffer.wrap(array, getReadableArrayOffset(), getReadableArrayLength()).asReadOnlyBuffer();
+        }
     }
 
     @Override
@@ -851,30 +894,46 @@ public final class ProtonByteArrayBuffer extends SharedResource<ProtonBuffer> im
 
     @Override
     public boolean hasWritableArray() {
-        return writeCapacity > 0;
+        return !isReadOnly() && isWritable();
     }
 
     @Override
     public byte[] getWritableArray() {
-        return array;
+        ProtonBufferUtils.checkIsClosed(this);
+
+        if (hasWritableArray()) {
+            return array;
+        } else {
+            throw new UnsupportedOperationException("The buffer does not have a writable array");
+        }
     }
 
     @Override
     public int getWritableArrayOffset() {
-        return arrayOffset + writeOffset;
+        if (hasWritableArray()) {
+            return arrayOffset + writeOffset;
+        } else {
+            return 0;
+        }
     }
 
     @Override
     public int getWritableArrayLength() {
-        return getWritableBytes();
+        if (hasWritableArray()) {
+            return getWritableBytes();
+        } else {
+            return 0;
+        }
     }
 
     @Override
     public ByteBuffer getWritableBuffer() {
+        ProtonBufferUtils.checkIsClosed(this);
+
         if (writeCapacity < 0) {
             return ByteBuffer.allocate(0);
         } else {
-            return ByteBuffer.wrap(array, arrayOffset + writeOffset, getWritableBytes());
+            return ByteBuffer.wrap(array, getWritableArrayOffset(), getWritableBytes());
         }
     }
 
@@ -954,6 +1013,7 @@ public final class ProtonByteArrayBuffer extends SharedResource<ProtonBuffer> im
         transfer.writeCapacity = writeCapacity;
         transfer.readOffset = readOffset;
         transfer.writeOffset = writeOffset;
+        transfer.implicitGrowthLimit = implicitGrowthLimit;
 
         return transfer;
     }
@@ -1030,7 +1090,7 @@ public final class ProtonByteArrayBuffer extends SharedResource<ProtonBuffer> im
 
         int capacity = capacity();
         if (mayExpand && index >= 0 && index <= capacity && writeOffset + size <= implicitGrowthLimit) {
-            int minimumGrowth = Math.min(Math.max(capacity * 2, size), implicitGrowthLimit) - capacity;
+            final int minimumGrowth = Math.min(Math.max(capacity, size), implicitGrowthLimit - capacity);
             ensureWritable(size, minimumGrowth, false);
             checkSet(index, size); // Verify writing is now possible, without recursing.
             return;

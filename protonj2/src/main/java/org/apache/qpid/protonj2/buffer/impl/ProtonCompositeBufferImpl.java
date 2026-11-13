@@ -131,6 +131,7 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
         this.readOffset = other.readOffset;
         this.writeOffset = other.writeOffset;
         this.lastAccessedChunk = other.lastAccessedChunk;
+        this.implicitGrowthLimit = other.implicitGrowthLimit;
     }
 
     /**
@@ -182,7 +183,7 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
     @Override
     public ProtonCompositeBuffer fill(byte value) {
         ProtonBufferUtils.checkIsClosed(this);
-        checkWriteBounds(value, 0);
+        checkWriteBounds(0, 1);
 
         for (int i = 0; i < buffers.length; ++i) {
             buffers[i].fill(value);
@@ -566,7 +567,12 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
             return this;
         }
 
-        if (allowCompaction && readOffset >= size) {
+        // Read offset needs to be greater than or equal to whatever portion of the size we can't
+        // already accommodate otherwise we assume it to be more efficient to just allocate a new buffer.
+        //
+        // NOTE: we could still attempt to reclaim any read buffers to reduce the allocation amount
+        //       but that might result in a higher sunk time cost.
+        if (allowCompaction && readOffset >= (size - getWritableBytes())) {
             if (buffers.length == 1) {
                 final ProtonBuffer target = buffers[0];
                 target.compact();
@@ -576,7 +582,7 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
                 int compacted = 0;
                 for (int i = 0; i < buffers.length; ++i) {
                     final ProtonBuffer current = buffers[i];
-                    if (current.getReadableBytes() == current.capacity()) {
+                    if (current.getReadOffset() == current.capacity()) {
                         compacted++;
                         // Buffer is now fully writable so reset the offsets
                         current.clear();
@@ -594,7 +600,14 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
                     // Move the rest down
                     System.arraycopy(buffers, compacted, buffers, 0, buffers.length - compacted);
                     // Placed the compacted buffers at the tail
-                    System.arraycopy(compactedSet, 0, buffers, compacted, compacted);
+                    System.arraycopy(compactedSet, 0, buffers, buffers.length - compacted, compacted);
+
+                    // Update read offset and write offset to account for removing the
+                    // set of buffers from the front
+                    for (ProtonBuffer compactedBuffer : compactedSet) {
+                        readOffset -= compactedBuffer.capacity();
+                        writeOffset -= compactedBuffer.capacity();
+                    }
 
                     recomputeChunkIndexValues();
                 }
@@ -979,7 +992,7 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
 
         while (bytesWritten < length && currentChunkIndex < buffers.length) {
             final ProtonBuffer buffer = buffers[currentChunkIndex];
-            final int chunkedWrite = Math.min(buffer.getReadableBytes(), length);
+            final int chunkedWrite = Math.min(buffer.getReadableBytes(), length - bytesWritten);
 
             final int written = buffer.transferTo(channel, chunkedWrite);
 
@@ -1001,21 +1014,21 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
         ProtonBufferUtils.checkIsClosed(this);
         ProtonBufferUtils.checkIsReadOnly(this);
 
-        final int readableBytes = Math.min(getWritableBytes(), length);
+        final int bytesToRead = Math.min(getWritableBytes(), length);
 
-        if (readableBytes == 0) {
+        if (bytesToRead == 0) {
             return 0;
         }
 
-        checkWriteBounds(getWriteOffset(), readableBytes);
+        checkWriteBounds(getWriteOffset(), bytesToRead);
 
         int lastAccessedChunk = findChunkWithIndex(writeOffset);
 
         int bytesRead = 0;
 
-        while (bytesRead < readableBytes && lastAccessedChunk < buffers.length) {
+        while (bytesRead < bytesToRead && lastAccessedChunk < buffers.length) {
             final ProtonBuffer buffer = buffers[lastAccessedChunk];
-            final int chunckedRead = Math.min(buffer.getWritableBytes(), readableBytes);
+            final int chunckedRead = Math.min(buffer.getWritableBytes(), bytesToRead - bytesRead);
 
             final int read = buffer.transferFrom(channel, chunckedRead);
 
@@ -1039,21 +1052,21 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
         ProtonBufferUtils.checkIsClosed(this);
         ProtonBufferUtils.checkIsReadOnly(this);
 
-        final int readableBytes = Math.min(getWritableBytes(), length);
+        final int bytesToRead = Math.min(getWritableBytes(), length);
 
-        if (readableBytes == 0) {
+        if (bytesToRead == 0) {
             return 0;
         }
 
-        checkWriteBounds(getWriteOffset(), readableBytes);
+        checkWriteBounds(getWriteOffset(), bytesToRead);
 
         int lastAccessedChunk = findChunkWithIndex(writeOffset);
 
         int bytesRead = 0;
 
-        while (bytesRead < readableBytes && lastAccessedChunk < buffers.length) {
+        while (bytesRead < bytesToRead && lastAccessedChunk < buffers.length) {
             final ProtonBuffer buffer = buffers[lastAccessedChunk];
-            final int chunckedRead = Math.min(buffer.getWritableBytes(), readableBytes);
+            final int chunckedRead = Math.min(buffer.getWritableBytes(), bytesToRead - bytesRead);
 
             final int read = buffer.transferFrom(channel, position, chunckedRead);
 
@@ -1116,7 +1129,7 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
             final byte result = buffers[currentBufferIndex].getByte(currentBufferOffset++);
 
             if (++offset != endOffset && currentBufferOffset == buffers[currentBufferIndex].capacity()) {
-                currentBufferIndex = findChunkWithIndex(currentBufferOffset);
+                currentBufferIndex++;
                 currentBufferOffset = 0;
             }
 
@@ -1182,8 +1195,7 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
             final byte result = buffers[currentBufferIndex].getByte(currentBufferOffset--);
 
             if (--offset != endOffset && currentBufferOffset < 0) {
-                currentBufferIndex = findChunkWithIndex(offset);
-                currentBufferOffset = 0;
+                currentBufferOffset = buffers[--currentBufferIndex].capacity() - 1;
             }
 
             return result;
@@ -1208,22 +1220,25 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
 
         checkIndexOfBounds(offset, length);
 
-        int bytesRead = 0;
+        if (length == 0) {
+            return -1;
+        }
+
         int lastAccessedChunk = findChunkWithIndex(offset);
         int readOffset = offset - startIndices[lastAccessedChunk];
 
         while (length > 0 && lastAccessedChunk != buffers.length) {
-            final ProtonBuffer buffer = buffers[lastAccessedChunk++];
-            final int readableBytes = Math.min(buffer.capacity(), length);
+            final ProtonBuffer buffer = buffers[lastAccessedChunk];
+            final int readableBytes = Math.min(buffer.capacity() - readOffset, length);
 
             final int result = buffer.indexOf(needle, readOffset, readableBytes);
             if (result != -1) {
-                return bytesRead + result;
+                return startIndices[lastAccessedChunk] + result;
             }
 
-            bytesRead += buffer.getReadableBytes();
-            length -= buffer.getReadableBytes();
+            length -= readableBytes;
             readOffset = 0;
+            lastAccessedChunk++;
         }
 
         return -1;
@@ -1267,6 +1282,10 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
      */
     public static ProtonCompositeBuffer create(ProtonBufferAllocator allocator, ProtonBuffer[] buffers) {
         Objects.requireNonNull(buffers, "Provided buffers array cannot be null");
+
+        if (buffers.length == 0) {
+            return new ProtonCompositeBufferImpl(allocator);
+        }
 
         final boolean readOnly = buffers[0].isReadOnly();
         final ProtonBuffer[] chain = buildChainFromBuffers(Arrays.copyOf(buffers, buffers.length));
@@ -1367,32 +1386,31 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
         // Claim each buffer before proceeding to filter and trim the buffers for composition.
         // Decompose and composites here before moving on to the next phase as well as removing
         // any zero capacity buffers.
-        for (int i = 0; i < chain.length; i++) {
+        for (int i = 0; i < buffers.length; i++) {
+            final ProtonBuffer current = buffers[i];
+
             try {
-                if (buffers[i].capacity() > 0) {
-                    if (buffers[i].isComposite()) {
-                        final int bufferCount = buffers[i].componentCount();
+                if (current.capacity() > 0) {
+                    if (current.isComposite()) {
+                        final int bufferCount = current.componentCount();
 
                         if (bufferCount > 1) {
                             chain = Arrays.copyOf(chain, chain.length + bufferCount - 1);
                         }
 
-                        for (ProtonBuffer buffer : ((ProtonCompositeBuffer)buffers[i]).decomposeBuffer()) {
+                        for (ProtonBuffer buffer : ((ProtonCompositeBuffer)current).decomposeBuffer()) {
                             chain[totalChunks++] = buffer;
                         }
 
-                        i += bufferCount - 1;
-
                         continue;
                     } else {
-                        chain[i] = buffers[i].transfer();
-                        totalChunks++;
+                        chain[totalChunks++] = current.transfer();
                     }
-                } else if (buffers[i].isClosed()) {
+                } else if (current.isClosed()) {
                     // This will capture attempt to add duplicate
                     throw new ProtonBufferClosedException("Cannot create a composite from a closed buffer");
                 } else {
-                    buffers[i].close();
+                    current.close();
                 }
             } catch (RuntimeException e) {
                 suppressed = e;
@@ -1836,27 +1854,27 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
 
         @Override
         public byte peekByte() {
-            throw new UnsupportedOperationException();
+            throw new UnsupportedOperationException("Internal only buffer accessor which does not support this operation");
         }
 
         @Override
         public byte getByte(int index) {
-            throw new UnsupportedOperationException();
+            throw new UnsupportedOperationException("Internal only buffer accessor which does not support this operation");
         }
 
         @Override
         public ProtonBuffer setByte(int index, byte value) {
-            throw new UnsupportedOperationException();
+            throw new UnsupportedOperationException("Internal only buffer accessor which does not support this operation");
         }
 
         @Override
         public byte readByte() {
-            throw new UnsupportedOperationException();
+            throw new UnsupportedOperationException("Internal only buffer accessor which does not support this operation");
         }
 
         @Override
         public ProtonBuffer writeByte(byte value) {
-            throw new UnsupportedOperationException();
+            throw new UnsupportedOperationException("Internal only buffer accessor which does not support this operation");
         }
 
         @Override
@@ -2101,8 +2119,6 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
         private ProtonBufferComponent currentComponent;
 
         private int bufferIndex;
-        private int cumulativeReadSkip; // Track total read skip to update parent in-place
-        private int cumulativeWriteSkip; // Track total read skip to update parent in-place
 
         public ProtonCompositeBufferComponentAccessor(ProtonCompositeBufferImpl composite) {
             this.composite =  composite;
@@ -2183,8 +2199,7 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
         @Override
         public ProtonBufferComponent advanceReadOffset(int amount) {
             currentComponent.advanceReadOffset(amount);
-            composite.setReadOffset(cumulativeReadSkip + amount);
-            cumulativeReadSkip += amount;
+            composite.setReadOffset(composite.getReadOffset() + amount);
 
             return currentComponent;
         }
@@ -2217,8 +2232,7 @@ public final class ProtonCompositeBufferImpl extends SharedResource<ProtonBuffer
         @Override
         public ProtonBufferComponent advanceWriteOffset(int amount) {
             currentComponent.advanceWriteOffset(amount);
-            composite.setWriteOffset(cumulativeWriteSkip + amount);
-            cumulativeWriteSkip += amount;
+            composite.setWriteOffset(composite.getWriteOffset() + amount);
 
             return currentComponent;
         }

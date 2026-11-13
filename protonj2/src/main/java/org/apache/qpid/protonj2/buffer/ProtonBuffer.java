@@ -20,6 +20,7 @@ import static org.apache.qpid.protonj2.buffer.ProtonBufferUtils.checkIsNotNegati
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
@@ -96,6 +97,7 @@ public interface ProtonBuffer extends ProtonBufferAccessors, Resource<ProtonBuff
      *
      * @return this buffer for use in chaining.
      *
+     * @throws ProtonBufferClosedException if the buffer has been closed
      * @throws IndexOutOfBoundsException if the value given is greater than the write offset or negative.
      */
     ProtonBuffer setReadOffset(int value);
@@ -108,7 +110,8 @@ public interface ProtonBuffer extends ProtonBufferAccessors, Resource<ProtonBuff
      *
      * @return this ProtonBuffer for chaining.
      *
-     * @throws IllegalArgumentException if the {#code length} given is negative.
+     * @throws ProtonBufferClosedException if the buffer has been closed
+     * @throws IllegalArgumentException if the {@code length} given is negative.
      * @throws IndexOutOfBoundsException
      *         if {@code length} is greater than {@code this.readableBytes}
      */
@@ -144,6 +147,8 @@ public interface ProtonBuffer extends ProtonBufferAccessors, Resource<ProtonBuff
      *
      * @return this buffer for use in chaining.
      *
+     * @throws ProtonBufferReadOnlyException if the buffer is a read-only buffer
+     * @throws ProtonBufferClosedException if the buffer has been closed
      * @throws IndexOutOfBoundsException if the value less than the read offset or greater than the capacity.
      */
     ProtonBuffer setWriteOffset(int value);
@@ -156,7 +161,9 @@ public interface ProtonBuffer extends ProtonBufferAccessors, Resource<ProtonBuff
      *
      * @return this ProtonBuffer for chaining.
      *
-     * @throws IllegalArgumentException if the {#code length} given is negative.
+     * @throws ProtonBufferClosedException if the buffer has been closed
+     * @throws ProtonBufferReadOnlyException if the buffer is a read-only buffer
+     * @throws IllegalArgumentException if the {@code length} given is negative.
      * @throws IndexOutOfBoundsException
      *         if {@code length} is greater than the buffer {@link #capacity()}
      */
@@ -239,6 +246,8 @@ public interface ProtonBuffer extends ProtonBufferAccessors, Resource<ProtonBuff
      *
      * @return this buffer for using in call chaining.
      *
+     * @throws ProtonBufferClosedException if the buffer has been closed
+     * @throws ProtonBufferReadOnlyException if the buffer is a read-only buffer
      * @throws IllegalArgumentException if the amount given is less than zero.
      * @throws IndexOutOfBoundsException if the amount given would result in the buffer
      *         exceeding the maximum capacity for this buffer.
@@ -271,6 +280,8 @@ public interface ProtonBuffer extends ProtonBufferAccessors, Resource<ProtonBuff
      *
      * @return this buffer for using in call chaining.
      *
+     * @throws ProtonBufferClosedException if the buffer has been closed
+     * @throws ProtonBufferReadOnlyException if the buffer is a read-only buffer
      * @throws IllegalArgumentException if the amount given is less than zero.
      * @throws IndexOutOfBoundsException if the amount given would result in the buffer
      *         exceeding the maximum capacity for this buffer.
@@ -369,11 +380,15 @@ public interface ProtonBuffer extends ProtonBufferAccessors, Resource<ProtonBuff
      * a buffer expansion would occur via an {@link #ensureWritable(int)} call.
      *
      * @return this buffer for using in call chaining.
+     *
+     * @throws ProtonBufferClosedException if the buffer has been closed
+     * @throws ProtonBufferReadOnlyException if the buffer is a read-only buffer
      */
     ProtonBuffer compact();
 
     /**
-     * Splits this buffer at the read offset + the length given.
+     * Splits this buffer at the read offset + the length given and returns a new
+     * buffer that contains the bytes that came before the indicated split point
      *
      * @param length
      * 		The number of bytes beyond the read offset where the split should occur
@@ -385,7 +400,8 @@ public interface ProtonBuffer extends ProtonBufferAccessors, Resource<ProtonBuff
     }
 
     /**
-     * Splits this buffer at the write offset + the length given.
+     * Splits this buffer at the write offset + the length given and returns a new
+     * buffer that contains the bytes that came before the indicated split point
      *
      * @param length
      * 		The number of bytes beyond the write offset where the split should occur
@@ -397,7 +413,8 @@ public interface ProtonBuffer extends ProtonBufferAccessors, Resource<ProtonBuff
     }
 
     /**
-     * Splits this buffer at the write offset.
+     * Splits this buffer at the write offset and returns a new buffer that contains the
+     * bytes that came before the current write offset.
      * <p>
      * This creates two independent buffers that can manage differing views of the same
      * memory region or in the case of a composite buffer two buffers that take ownership
@@ -415,7 +432,8 @@ public interface ProtonBuffer extends ProtonBufferAccessors, Resource<ProtonBuff
     }
 
     /**
-     * Splits this buffer at the given offset.
+     * Splits this buffer at the given offset and returns a new buffer that contains
+     * the bytes that came before the split offset.
      * <p>
      * This creates two independent buffers that can manage differing views of the same
      * memory region or in the case of a composite buffer two buffers that take ownership
@@ -434,13 +452,16 @@ public interface ProtonBuffer extends ProtonBufferAccessors, Resource<ProtonBuff
     ProtonBuffer split(int splitOffset);
 
     /**
-     * Returns a String created from the buffer's underlying bytes using the specified
+     * Returns a String created from the buffer's underlying readable bytes using the specified
      * {@link java.nio.charset.Charset} for the newly created String.
      *
      * @param charset
      *      the {@link java.nio.charset.Charset} to use to construct the new string.
      *
-     * @return a string created from the buffer's underlying bytes using the given {@link java.nio.charset.Charset}.
+     * @return a string created from the buffer's underlying readable bytes using the given
+     * 		   {@link java.nio.charset.Charset}.
+     *
+     * @throws ProtonBufferClosedException if the buffer has already been closed
      */
     default String toString(Charset charset) {
         return ProtonBufferUtils.toString(this, charset);
@@ -459,6 +480,9 @@ public interface ProtonBuffer extends ProtonBufferAccessors, Resource<ProtonBuff
      *         or greater than the given buffer.
      *
      * @see Comparable#compareTo(Object)
+     *
+     * @throws NullPointerException if the passed buffer is null
+     * @throws ProtonBufferClosedException if either this buffer or the passed in buffer has been closed
      */
     @Override
     default int compareTo(ProtonBuffer buffer) {
@@ -643,13 +667,19 @@ public interface ProtonBuffer extends ProtonBufferAccessors, Resource<ProtonBuff
             }
             advanceWriteOffset(source.remaining());
 
-            // Try to reduce bounds-checking by using larger primitives when possible.
-            for (; length >= Long.BYTES; length -= Long.BYTES, writeOffset += Long.BYTES) {
-                setLong(writeOffset, source.getLong());
+            // Try to reduce bounds-checking by using larger primitives when possible based on the
+            // size of the buffer and its byte order.
+            if (source.order() == ByteOrder.BIG_ENDIAN) {
+                for (; length >= Long.BYTES; length -= Long.BYTES, writeOffset += Long.BYTES) {
+                    setLong(writeOffset, source.getLong());
+                }
+                for (; length >= Integer.BYTES; length -= Integer.BYTES, writeOffset += Integer.BYTES) {
+                    setInt(writeOffset, source.getInt());
+                }
             }
-            for (; length >= Integer.BYTES; length -= Integer.BYTES, writeOffset += Integer.BYTES) {
-                setInt(writeOffset, source.getInt());
-            }
+
+            // We either handle any bytes that the above copy could not complete or we handle all
+            // byte copies if the source direct buffer is not in BIG_ENDIAN byte order.
             for (; length > 0; length--, writeOffset++) {
                 setByte(writeOffset, source.get());
             }
@@ -894,7 +924,7 @@ public interface ProtonBuffer extends ProtonBufferAccessors, Resource<ProtonBuff
      * @param offset
      * 		The offset into the buffer where the search should begin from.
      * @param length
-     * 		The offset into the buffer where the search should begin from.
+     * 		The number of bytes to search beyond the given offset.
      *
      * @return the location in the buffer where the value was found or <code>-1</code> if not found.
      */

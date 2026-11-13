@@ -106,10 +106,10 @@ public final class Netty4ToProtonBufferAdapter extends SharedResource<ProtonBuff
      * 		The {@link ByteBuf} resource to wrap.
      */
     public Netty4ToProtonBufferAdapter(Netty4ProtonBufferAllocator allocator, ByteBuf resource) {
-        this(allocator, resource, Objects.requireNonNull(resource, "The provided ByteBuf instance cannot be null").isReadOnly());
+        this(allocator, resource, Objects.requireNonNull(resource, "The provided ByteBuf instance cannot be null").isReadOnly(), ProtonBufferUtils.MAX_BUFFER_CAPACITY);
     }
 
-    private Netty4ToProtonBufferAdapter(Netty4ProtonBufferAllocator allocator, ByteBuf resource, boolean readOnly) {
+    private Netty4ToProtonBufferAdapter(Netty4ProtonBufferAllocator allocator, ByteBuf resource, boolean readOnly, int implicitGrowthLimit) {
         this.allocator = allocator;
         this.resource = resource;
         this.readOnly = readOnly;
@@ -117,6 +117,7 @@ public final class Netty4ToProtonBufferAdapter extends SharedResource<ProtonBuff
         this.writeCapacity = readOnly ? CLOSED_MARKER : readCapacity;
         this.readOffset = resource.readerIndex();
         this.writeOffset = resource.writerIndex();
+        this.implicitGrowthLimit = implicitGrowthLimit;
     }
 
     public Netty4ProtonBufferAllocator allocator() {
@@ -484,7 +485,9 @@ public final class Netty4ToProtonBufferAdapter extends SharedResource<ProtonBuff
 
     @Override
     public String toString(Charset charset) {
-        return resource.toString(charset);
+        ProtonBufferUtils.checkIsClosed(this);
+
+        return resource.toString(readOffset, getReadableBytes(), charset);
     }
 
     @Override
@@ -493,11 +496,6 @@ public final class Netty4ToProtonBufferAdapter extends SharedResource<ProtonBuff
                "{ read:" + readOffset +
                ", write: " + writeOffset +
                ", capacity: " + readCapacity + "}";
-    }
-
-    @Override
-    public int compareTo(ProtonBuffer buffer) {
-        return ProtonBufferUtils.compare(this, buffer);
     }
 
     @Override
@@ -802,7 +800,7 @@ public final class Netty4ToProtonBufferAdapter extends SharedResource<ProtonBuff
 
     @Override
     public boolean hasReadbleArray() {
-        return resource.hasArray();
+        return resource.hasArray() && isReadable();
     }
 
     @Override
@@ -812,21 +810,36 @@ public final class Netty4ToProtonBufferAdapter extends SharedResource<ProtonBuff
 
     @Override
     public byte[] getReadableArray() {
-        return resource.array();
+        ProtonBufferUtils.checkIsClosed(this);
+
+        if (hasReadbleArray()) {
+            return resource.array();
+        } else {
+            throw new UnsupportedOperationException("The buffer does not have a readable array");
+        }
     }
 
     @Override
     public int getReadableArrayOffset() {
-        return resource.arrayOffset() + getReadOffset();
+        if (hasReadbleArray()) {
+            return resource.arrayOffset() + getReadOffset();
+        } else {
+            return 0;
+        }
     }
 
     @Override
     public int getReadableArrayLength() {
-        return getReadableBytes();
+        if (hasReadbleArray()) {
+            return getReadableBytes();
+        } else {
+            return 0;
+        }
     }
 
     @Override
     public ByteBuffer getReadableBuffer() {
+        ProtonBufferUtils.checkIsClosed(this);
         return resource.nioBuffer(readOffset, getReadableBytes()).asReadOnlyBuffer();
     }
 
@@ -837,26 +850,42 @@ public final class Netty4ToProtonBufferAdapter extends SharedResource<ProtonBuff
 
     @Override
     public boolean hasWritableArray() {
-        return resource.hasArray() && !isReadOnly();
+        return resource.hasArray() && !isReadOnly() && isWritable();
     }
 
     @Override
     public byte[] getWritableArray() {
-        return resource.array();
+        ProtonBufferUtils.checkIsClosed(this);
+
+        if (hasWritableArray()) {
+            return resource.array();
+        } else {
+            throw new UnsupportedOperationException("The buffer does not have a writable array");
+        }
     }
 
     @Override
     public int getWritableArrayOffset() {
-        return resource.arrayOffset() + getWriteOffset();
+        if (hasWritableArray()) {
+            return resource.arrayOffset() + getWriteOffset();
+        } else {
+            return 0;
+        }
     }
 
     @Override
     public int getWritableArrayLength() {
-        return getWritableBytes();
+        if (hasWritableArray()) {
+            return getWritableBytes();
+        } else {
+            return 0;
+        }
     }
 
     @Override
     public ByteBuffer getWritableBuffer() {
+        ProtonBufferUtils.checkIsClosed(this);
+
         if (hasWritableArray()) {
             return ByteBuffer.wrap(resource.array(), resource.arrayOffset() + writeOffset, getWritableBytes());
         } else {
@@ -1000,6 +1029,7 @@ public final class Netty4ToProtonBufferAdapter extends SharedResource<ProtonBuff
     @Override
     public int indexOf(byte needle, int offset, int length) {
         ProtonBufferUtils.checkIsClosed(this);
+        checkIndexOfBounds(offset, length);
 
         final int count = resource.bytesBefore(offset, length, needle);
 
@@ -1028,7 +1058,7 @@ public final class Netty4ToProtonBufferAdapter extends SharedResource<ProtonBuff
     @Override
     protected ProtonBuffer transferTheResource() {
         try {
-            return new Netty4ToProtonBufferAdapter(allocator, resource.setIndex(readOffset, writeOffset), readOnly);
+            return new Netty4ToProtonBufferAdapter(allocator, resource.setIndex(readOffset, writeOffset), readOnly, implicitGrowthLimit);
         } finally {
              resource = Unpooled.EMPTY_BUFFER;
         }
@@ -1080,6 +1110,14 @@ public final class Netty4ToProtonBufferAdapter extends SharedResource<ProtonBuff
     private void checkWrite(int index, int size, boolean allowExpansion) {
         if (index < readOffset || writeCapacity < (index + size)) {
             expandOrThrowError(index, size, allowExpansion);
+        }
+    }
+
+    private void checkIndexOfBounds(int index, int size) {
+        if (index < readOffset || writeOffset < index + size) {
+            throw new IndexOutOfBoundsException(
+                "Search range [read " + index + " length " + size  +
+                "] is out of bounds: [read " + readOffset + " length " + getReadableBytes() + "].");
         }
     }
 
