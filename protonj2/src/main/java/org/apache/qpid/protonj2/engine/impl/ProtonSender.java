@@ -270,6 +270,11 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
     }
 
     ProtonSender handleSessionCreditStateUpdate(ProtonSessionOutgoingWindow protonSessionOutgoingWindow) {
+        if (!isLocallyOpen()) {
+            // same as for link flows, the sendable state is computed when the link opens locally
+            return this;
+        }
+
         final boolean previousSendable = sendable;
 
         sendable = getCredit() > 0 && sessionWindow.isSendable();
