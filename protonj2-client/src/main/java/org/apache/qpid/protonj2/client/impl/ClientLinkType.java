@@ -392,7 +392,7 @@ public abstract class ClientLinkType<LinkType extends Link<LinkType>,
     }
 
     protected final void handleEngineShutdown(Engine engine) {
-        if (!isDynamic() && !session.getConnection().getEngine().isShutdown()) {
+        if (!isClosed() && !isDynamic() && !session.isClosed() && !session.getConnection().getEngine().isShutdown()) {
             recreateLinkForReconnect();
             open();
         } else {
@@ -404,10 +404,12 @@ public abstract class ClientLinkType<LinkType extends Link<LinkType>,
                 failureCause = ClientExceptionSupport.convertToConnectionClosedException(connection.getRemoteCondition());
             } else if (engine.failureCause() != null) {
                 failureCause = ClientExceptionSupport.convertToConnectionClosedException(engine.failureCause());
-            } else if (!isClosed()) {
-                failureCause = new ClientConnectionRemotelyClosedException("Remote closed without a specific error condition");
-            } else {
+            } else if (isClosed()) {
                 failureCause = null;
+            } else if (session.isClosed()) {
+                failureCause = new ClientResourceRemotelyClosedException("The parent Session has closed");
+            } else {
+                failureCause = new ClientConnectionRemotelyClosedException("Remote closed without a specific error condition");
             }
 
             immediateLinkShutdown(failureCause);

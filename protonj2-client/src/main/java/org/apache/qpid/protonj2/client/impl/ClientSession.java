@@ -598,7 +598,7 @@ public class ClientSession implements Session {
         // If the connection has an engine that is running then it is going to attempt
         // reconnection and we want to recover by creating a new Session that will be
         // opened once the remote has been recovered.
-        if (!connection.getEngine().isShutdown()) {
+        if (!isClosed() && !connection.getEngine().isShutdown()) {
             // No local close processing needed but we should try and let the session
             // clean up any resources it can by closing it.
             protonSession.localCloseHandler(null);
