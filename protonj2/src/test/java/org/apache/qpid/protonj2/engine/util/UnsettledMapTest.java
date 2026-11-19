@@ -17,6 +17,7 @@
 
 package org.apache.qpid.protonj2.engine.util;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -57,7 +58,7 @@ import org.junit.jupiter.api.Test;
  */
 public class UnsettledMapTest {
 
-    protected static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(SplayMapTest.class);
+    protected static final ProtonLogger LOG = ProtonLoggerFactory.getLogger(UnsettledMapTest.class);
 
     protected long seed;
     protected Random random;
@@ -89,9 +90,30 @@ public class UnsettledMapTest {
     }
 
     /**
+     * Asserts that each delivery the tracker still counts as unsettled can be found by its ID. A
+     * delivery that survives in the tracker but cannot be located by a random access search could
+     * never be settled by a disposition again.
+     * <p>
+     * The check visits every tracked delivery and searches for it by ID, which costs more than the
+     * operations it guards, so the random tests only run it at intervals and once at the end.
+     */
+    private void assertAllTrackedDeliveriesAreReachable(UnsettledMap<DeliveryType> tracker) {
+        int visited = 0;
+
+        for (DeliveryType delivery : tracker.values()) {
+            final int deliveryId = delivery.getDeliveryId();
+            assertNotNull(tracker.get(deliveryId),
+                "Delivery " + UnsignedInteger.valueOf(deliveryId) + " should be reachable by its ID");
+            visited++;
+        }
+
+        assertEquals(tracker.size(), visited, "The values view should visit each tracked delivery once");
+    }
+
+    /**
      * Simple delivery type used for this test
      */
-    private class DeliveryType {
+    private static class DeliveryType {
 
         private final int deliveryId;
 
@@ -144,6 +166,16 @@ public class UnsettledMapTest {
         assertNotNull(tracker.toString());
     }
 
+    @SuppressWarnings("unlikely-arg-type")
+    @Test
+    public void testMapRejectedOversizedLongObjects() {
+        UnsettledMap<DeliveryType> tracker = createMap();
+
+        assertNull(tracker.get(Long.valueOf(Long.MAX_VALUE)));
+        assertNull(tracker.remove(Long.valueOf(Long.MAX_VALUE)));
+        assertFalse(tracker.containsKey(Long.valueOf(Long.MAX_VALUE)));
+    }
+
     @Test
     public void testCreateUnsettledTracker() {
         UnsettledMap<DeliveryType> tracker = createMap();
@@ -174,6 +206,14 @@ public class UnsettledMapTest {
         tracker.put(0, new DeliveryType(0));
 
         assertNull(tracker.get("foo"));
+    }
+
+    @Test
+    public void testValuesRemoveNullReturnsFalsePerCollectionsContract() {
+        final UnsettledMap<DeliveryType> map = createMap();
+        map.put(UnsignedInteger.valueOf(1), new DeliveryType(1));
+
+        assertFalse(map.values().remove(null));
     }
 
     @Test
@@ -1146,7 +1186,7 @@ public class UnsettledMapTest {
     }
 
     @Test
-    public void TestKeySetRetainAllFromCollectionWhenMapHasCustomBucketsAndRetainedIsInFirstBucket() {
+    public void testKeySetRetainAllFromCollectionWhenMapHasCustomBucketsAndRetainedIsInFirstBucket() {
         // Start with three buckets of size three
         UnsettledMap<DeliveryType> tracker = createMap(3, 3);
 
@@ -1211,7 +1251,7 @@ public class UnsettledMapTest {
 
     @SuppressWarnings("unlikely-arg-type")
     @Test
-    public void tesEntrySetReturned() {
+    public void testEntrySetReturned() {
         UnsettledMap<DeliveryType> tracker = createMap();
 
         tracker.put(0, new DeliveryType(0));
@@ -1225,8 +1265,8 @@ public class UnsettledMapTest {
         assertFalse(entries.isEmpty());
         assertSame(entries, tracker.entrySet());
 
-        final UnsettledMap.ImmutableUnsettledTrackingkMapEntry<DeliveryType> entry =
-            new UnsettledMap.ImmutableUnsettledTrackingkMapEntry<DeliveryType>(3, new DeliveryType(3));
+        final UnsettledMap.ImmutableUnsettledTrackingMapEntry<DeliveryType> entry =
+            new UnsettledMap.ImmutableUnsettledTrackingMapEntry<DeliveryType>(3, new DeliveryType(3));
 
         assertEquals(3, entry.getPrimitiveKey());
         assertEquals(3, entry.getValue().getDeliveryId());
@@ -1245,7 +1285,7 @@ public class UnsettledMapTest {
     }
 
     @Test
-    public void tesEntrySetContains() {
+    public void testEntrySetContainsSimple() {
         UnsettledMap<DeliveryType> tracker = createMap();
 
         tracker.put(0, new DeliveryType(0));
@@ -1324,7 +1364,7 @@ public class UnsettledMapTest {
     }
 
     @Test
-    public void testEntryIterationFollowsInterstionOrderingExpectations() {
+    public void testEntryIterationFollowsIntersectionOrderingExpectations() {
         UnsettledMap<DeliveryType> tracker = createMap();
 
         final int[] inputValues = {3, 0, -1, 1, -2, 2};
@@ -1399,13 +1439,21 @@ public class UnsettledMapTest {
                 tracker.put(UnsignedInteger.valueOf(i), new DeliveryType(i));
             }
 
+            assertAllTrackedDeliveriesAreReachable(tracker);
+
             for (int i = 0; i < ITERATIONS; ++i) {
                 int p = random.nextInt(ITERATIONS);
                 int c = random.nextInt(ITERATIONS);
 
                 tracker.put(UnsignedInteger.valueOf(p), new DeliveryType(p));
                 tracker.remove(UnsignedInteger.valueOf(c));
+
+                if (i % 2048 == 0) {
+                    assertAllTrackedDeliveriesAreReachable(tracker);
+                }
             }
+
+            assertAllTrackedDeliveriesAreReachable(tracker);
         } catch (Throwable error) {
             dumpRandomDataSet(ITERATIONS, seed, true);
             throw error;
@@ -1425,7 +1473,13 @@ public class UnsettledMapTest {
 
                 tracker.put(UnsignedInteger.valueOf(p), new DeliveryType(p));
                 tracker.remove(UnsignedInteger.valueOf(c));
+
+                if (i % 2048 == 0) {
+                    assertAllTrackedDeliveriesAreReachable(tracker);
+                }
             }
+
+            assertAllTrackedDeliveriesAreReachable(tracker);
         } catch (Throwable error) {
             dumpRandomDataSet(ITERATIONS, seed, true);
             throw error;
@@ -1445,7 +1499,13 @@ public class UnsettledMapTest {
 
                 tracker.put(UnsignedInteger.valueOf(p), new DeliveryType(p));
                 tracker.remove(UnsignedInteger.valueOf(c));
+
+                if (i % 2048 == 0) {
+                    assertAllTrackedDeliveriesAreReachable(tracker);
+                }
             }
+
+            assertAllTrackedDeliveriesAreReachable(tracker);
         } catch (Throwable error) {
             dumpRandomDataSet(ITERATIONS, seed, true);
             throw error;
@@ -1998,6 +2058,30 @@ public class UnsettledMapTest {
     }
 
     @Test
+    public void testHighestIdLookupFindsEarliestInstanceOfADuplicateId() {
+        UnsettledMap<DeliveryType> tracker = createMap();
+
+        DeliveryType original = new DeliveryType(1);
+        DeliveryType duplicate = new DeliveryType(1);
+
+        tracker.put(1, original);
+        tracker.put(1, duplicate); // duplicate ID forces a new generation at the head
+
+        // The ID being sought is the highest of the series and so the head bucket case, however the
+        // search from the tail must still win while an overflow is active as that is where the
+        // matching series starts.
+        assertSame(original, tracker.get(1), "Should have found the original instance of the ID");
+        assertSame(original, tracker.remove(1), "Should have removed the original instance of the ID");
+
+        // The remaining instance is now the only match for the ID and also the highest of the
+        // series, which is the case answered directly from the head bucket.
+        assertSame(duplicate, tracker.get(1), "Should have found the remaining instance of the ID");
+        assertSame(duplicate, tracker.remove(1), "Should have removed the remaining instance of the ID");
+
+        assertTrue(tracker.isEmpty(), "All tracked deliveries should have been settled");
+    }
+
+    @Test
     public void testIteratorRemoveAllSequentially() {
         UnsettledMap<DeliveryType> tracker = createMap();
 
@@ -2161,13 +2245,7 @@ public class UnsettledMapTest {
             removed = it.next();
         }
 
-        try {
-            it.remove();
-        } catch (IndexOutOfBoundsException ex) {
-            fail("Iterator remove threw IndexOutOfBoundsException for bucketSize=" + bucketSize +
-                 " at index > 256 which is beyond the default bucket capacity value. ");
-        }
-
+        assertDoesNotThrow(() -> it.remove());
         assertNotNull(removed);
         assertNull(tracker.get(removed.getDeliveryId()));
         assertEquals(bucketSize - 1, tracker.size());
@@ -2962,6 +3040,60 @@ public class UnsettledMapTest {
         assertTrue(visited.contains(-1));
     }
 
+    @Test
+    public void testForEachAndRemoveEachCoverOneSeriesOfDeliveriesAtATime() {
+        final UnsettledMap<DeliveryType> map = createMap(4, 8);
+
+        // Deliveries of a first series of IDs, the next two IDs roll the series backwards which
+        // begins a second series of deliveries that is tracked alongside the first one.
+        map.put(100, new DeliveryType(100));
+        map.put(101, new DeliveryType(101));
+        map.put(102, new DeliveryType(102));
+        map.put(50, new DeliveryType(50));
+        map.put(51, new DeliveryType(51));
+
+        assertEquals(5, map.size(), "Every delivery added should be tracked");
+        assertAllTrackedDeliveriesAreReachable(map);
+
+        final List<Integer> visited = new ArrayList<>();
+        map.forEach(50, 200, (delivery) -> visited.add(delivery.getDeliveryId()));
+
+        // A ranged visit covers a single series of deliveries at a time so only the oldest series
+        // is visited even though the range also holds the deliveries of the newer series.
+        assertEquals(Arrays.asList(100, 101, 102), visited,
+            "The ranged visit should cover the deliveries of the first series: " + visited);
+        assertEquals(5, map.size(), "forEach should not alter the tracker contents");
+        assertAllTrackedDeliveriesAreReachable(map);
+
+        // A range that only holds the deliveries of the newer series covers them regardless of the
+        // series that precedes them in the tracker.
+        final List<Integer> newerSeries = new ArrayList<>();
+        map.forEach(50, 60, (delivery) -> newerSeries.add(delivery.getDeliveryId()));
+
+        assertEquals(Arrays.asList(50, 51), newerSeries,
+            "The range of the newer series should cover its deliveries: " + newerSeries);
+        assertEquals(5, map.size(), "forEach should not alter the tracker contents");
+
+        final List<Integer> removed = new ArrayList<>();
+        map.removeEach(50, 200, (delivery) -> removed.add(delivery.getDeliveryId()));
+
+        assertEquals(Arrays.asList(100, 101, 102), removed,
+            "The ranged removal should cover the same deliveries as the ranged visit: " + removed);
+        assertEquals(2, map.size(), "Only the deliveries of the covered series should have been removed");
+        assertNull(map.get(100), "Delivery within the range should have been removed");
+        assertNotNull(map.get(50), "Delivery of the other series should still be tracked");
+        assertAllTrackedDeliveriesAreReachable(map);
+
+        // The newer series remains tracked and is covered by the next pass over the same range.
+        final List<Integer> continued = new ArrayList<>();
+        map.forEach(50, 200, (delivery) -> continued.add(delivery.getDeliveryId()));
+
+        assertEquals(Arrays.asList(50, 51), continued,
+            "The next pass over the range should cover the remaining series: " + continued);
+        assertEquals(2, map.size(), "forEach should not alter the tracker contents");
+        assertAllTrackedDeliveriesAreReachable(map);
+    }
+
     //----- removeEach method test variations
 
     @Test
@@ -3539,5 +3671,737 @@ public class UnsettledMapTest {
 
         // Should stop at end of Gen 0 and not bleed into Gen 1
         assertEquals(2, count.get());
+    }
+
+    @Test
+    public void testIteratorRemoveEveryOtherEntryFromExactlyFilledBuckets() {
+        final UnsettledMap<DeliveryType> map = createMap(2, 2); // Two buckets of two entries
+
+        for (int i = 0; i < 4; i++) {
+            map.put(i, new DeliveryType(i));
+        }
+
+        // The head bucket is exactly full and the removed entry is the last entry of that
+        // bucket, which forces the remaining entries to be compacted into the previous bucket.
+        final Iterator<DeliveryType> iterator = map.values().iterator();
+        int visited = 0;
+        while (iterator.hasNext()) {
+            iterator.next();
+            visited++;
+            if (visited % 2 == 0) {
+                iterator.remove();
+            }
+        }
+
+        assertEquals(4, visited, "Iteration should visit all four entries");
+        assertEquals(2, map.size(), "Half of the deliveries should have been removed");
+        assertNotNull(map.get(0), "Even numbered deliveries should still be tracked");
+        assertNull(map.get(1), "Odd numbered deliveries should have been removed");
+        assertNotNull(map.get(2), "Even numbered deliveries should still be tracked");
+        assertNull(map.get(3), "Odd numbered deliveries should have been removed");
+    }
+
+    @Test
+    public void testIteratorRemoveEveryOtherEntryFromDefaultSizedMap() {
+        final UnsettledMap<DeliveryType> map = createMap(); // Default bucket size of 256
+
+        // Two buckets that are both exactly full when the iteration begins.
+        for (int i = 0; i < 512; i++) {
+            map.put(i, new DeliveryType(i));
+        }
+
+        final Iterator<DeliveryType> iterator = map.values().iterator();
+        int visited = 0;
+        while (iterator.hasNext()) {
+            iterator.next();
+            visited++;
+            if (visited % 2 == 0) {
+                iterator.remove();
+            }
+        }
+
+        assertEquals(512, visited, "Iteration should visit all of the added deliveries");
+        assertEquals(256, map.size(), "Half of the deliveries should have been removed");
+
+        for (int i = 0; i < 512; i++) {
+            if (i % 2 == 0) {
+                assertNotNull(map.get(i), "Even delivery " + i + " should still be tracked");
+            } else {
+                assertNull(map.get(i), "Odd delivery " + i + " should have been removed");
+            }
+        }
+    }
+
+    @Test
+    public void testKeySetIteratorRemoveEveryOtherEntryFromDefaultSizedMap() {
+        final UnsettledMap<DeliveryType> map = createMap(); // Default bucket size of 256
+
+        for (int i = 0; i < 512; i++) {
+            map.put(i, new DeliveryType(i));
+        }
+
+        final Iterator<UnsignedInteger> iterator = map.keySet().iterator();
+        int visited = 0;
+        while (iterator.hasNext()) {
+            iterator.next();
+            visited++;
+            if (visited % 2 == 0) {
+                iterator.remove();
+            }
+        }
+
+        assertEquals(512, visited, "Iteration should visit all of the added keys");
+        assertEquals(256, map.size(), "Half of the deliveries should have been removed");
+    }
+
+    @Test
+    public void testEntrySetIteratorRemoveEveryOtherEntryFromDefaultSizedMap() {
+        final UnsettledMap<DeliveryType> map = createMap(); // Default bucket size of 256
+
+        for (int i = 0; i < 512; i++) {
+            map.put(i, new DeliveryType(i));
+        }
+
+        final Iterator<Entry<UnsignedInteger, DeliveryType>> iterator = map.entrySet().iterator();
+        int visited = 0;
+        while (iterator.hasNext()) {
+            iterator.next();
+            visited++;
+            if (visited % 2 == 0) {
+                iterator.remove();
+            }
+        }
+
+        assertEquals(512, visited, "Iteration should visit all of the added entries");
+        assertEquals(256, map.size(), "Half of the deliveries should have been removed");
+    }
+
+    @Test
+    public void testRangedForEachWhenWrappedRangeStartsAtTheHighestPreWrapDeliveryId() {
+        final UnsettledMap<DeliveryType> map = createMap(5, 50);
+
+        final int PRE_WRAP_LAST_DELIVERY_ID = UnsignedInteger.MAX_VALUE.intValue() - 15;
+        final int PRE_WRAP_FIRST_DELIVERY_ID = PRE_WRAP_LAST_DELIVERY_ID - 4;
+
+        // Same contents as the tests above, built here so the two generation layout is visible.
+        for (int i = PRE_WRAP_FIRST_DELIVERY_ID; i <= PRE_WRAP_LAST_DELIVERY_ID; i++) {
+            map.put(i, new DeliveryType(i));
+        }
+        for (int i = 0; i < 11; i++) {
+            map.put(i, new DeliveryType(i));
+        }
+
+        assertNotNull(map.get(PRE_WRAP_LAST_DELIVERY_ID), "Delivery before the overflow should be tracked");
+        assertNotNull(map.get(10), "Delivery following the overflow should be tracked");
+
+        // Counterpart of the first test above: when the start of the range is covered by the
+        // deliveries that preceded the overflow, the visit does continue into the deliveries that
+        // follow the overflow.
+        final List<Integer> visited = new ArrayList<>();
+        map.forEach(PRE_WRAP_LAST_DELIVERY_ID, 5, (delivery) -> visited.add(delivery.getDeliveryId()));
+
+        assertEquals(7, visited.size(), "Ranged visit should cover both sides of the overflow: " + visited);
+        assertTrue(visited.contains(PRE_WRAP_LAST_DELIVERY_ID),
+            "The delivery that the range starts at should be visited: " + visited);
+        for (int i = 0; i <= 5; i++) {
+            assertTrue(visited.contains(i), "Delivery " + i + " is within the range and should be visited: " + visited);
+        }
+        assertEquals(16, map.size(), "forEach should not alter the tracker contents");
+    }
+
+    @Test
+    public void testEqualsWithHashMapKeyedOnUnsignedInteger() {
+        final UnsettledMap<DeliveryType> unsettled = createMap();
+        final Map<UnsignedInteger, DeliveryType> hashMap = new HashMap<>();
+
+        for (int i = 1; i <= 5; i++) {
+            unsettled.put(i, new DeliveryType(i));
+            hashMap.put(UnsignedInteger.valueOf(i), new DeliveryType(i));
+        }
+
+        assertEquals(hashMap.size(), unsettled.size(), "Maps should hold the same number of entries");
+        assertTrue(unsettled.equals(hashMap), "UnsettledMap should equal a HashMap holding the same mappings");
+        assertTrue(hashMap.equals(unsettled), "Map equality should be symmetric for a HashMap");
+    }
+
+    @Test
+    public void testEqualsWithTreeMapKeyedOnUnsignedInteger() {
+        final UnsettledMap<DeliveryType> unsettled = createMap();
+        final Map<UnsignedInteger, DeliveryType> treeMap = new TreeMap<>();
+
+        for (int i = 1; i <= 5; i++) {
+            unsettled.put(i, new DeliveryType(i));
+            treeMap.put(UnsignedInteger.valueOf(i), new DeliveryType(i));
+        }
+
+        assertEquals(treeMap.size(), unsettled.size(), "Maps should hold the same number of entries");
+        assertTrue(unsettled.equals(treeMap), "UnsettledMap should equal a TreeMap holding the same mappings");
+        assertTrue(treeMap.equals(unsettled), "Map equality should be symmetric for a TreeMap");
+    }
+
+    @Test
+    public void testImmutableMapEntryEquals() {
+        final UnsettledMap<DeliveryType> first = createMap();
+        final UnsettledMap<DeliveryType> second = createMap();
+
+        first.put(UnsignedInteger.valueOf(1), new DeliveryType(1));
+        second.put(UnsignedInteger.valueOf(1), new DeliveryType(1));
+
+        final Entry<UnsignedInteger, DeliveryType> firstEntry = first.entrySet().iterator().next();
+        final Entry<UnsignedInteger, DeliveryType> secondEntry = second.entrySet().iterator().next();
+
+        assertEquals(firstEntry.getKey(), secondEntry.getKey(), "Entries should hold the same key");
+        assertEquals(firstEntry.getValue(), secondEntry.getValue(), "Entries should hold the same value");
+
+        assertTrue(firstEntry.equals(secondEntry),
+            "Map.Entry requires value based equality, the same mapping must compare equal");
+        assertTrue(secondEntry.equals(firstEntry),
+            "Map.Entry equality must be symmetric for two equal mappings");
+        assertFalse(firstEntry.equals(Map.entry(UnsignedInteger.valueOf(1), new DeliveryType(2))),
+            "Map.Entry instances with different values must not compare equal");
+    }
+
+    @Test
+    public void testImmutableMapEntryHashCode() {
+        final UnsettledMap<DeliveryType> first = createMap();
+        final UnsettledMap<DeliveryType> second = createMap();
+
+        first.put(UnsignedInteger.valueOf(1), new DeliveryType(1));
+        second.put(UnsignedInteger.valueOf(1), new DeliveryType(1));
+
+        final Entry<UnsignedInteger, DeliveryType> firstEntry = first.entrySet().iterator().next();
+        final Entry<UnsignedInteger, DeliveryType> secondEntry = second.entrySet().iterator().next();
+
+        assertEquals(firstEntry.hashCode(), secondEntry.hashCode(),
+            "Equal Map.Entry instances must have the same hash code");
+        assertEquals(firstEntry.hashCode(),
+            Map.entry(UnsignedInteger.valueOf(1), new DeliveryType(1)).hashCode(),
+            "Map.Entry hash codes must be based on the key and value, not the instance identity");
+    }
+
+    @Test
+    public void testEntrySetContainsMatchesKeyAndValue() {
+        final UnsettledMap<DeliveryType> map = createMap();
+        map.put(UnsignedInteger.valueOf(1), new DeliveryType(1));
+
+        assertTrue(map.entrySet().contains(Map.entry(UnsignedInteger.valueOf(1), new DeliveryType(1))),
+            "entrySet should contain an entry with the same key and value");
+        assertFalse(map.entrySet().contains(Map.entry(UnsignedInteger.valueOf(1), new DeliveryType(2))),
+            "entrySet should not contain an entry that has the same key but a different value");
+    }
+
+    @Test
+    public void testForEachDeliveryFailsWhenEntryRemovedByAction() {
+        final UnsettledMap<DeliveryType> map = createMap(5, 10);
+
+        for (int i = 0; i < 25; i++) {
+            map.put(i, new DeliveryType(i));
+        }
+
+        // The visited delivery is a stand in for any action that settles another delivery while
+        // the tracker is being traversed, which restructures the buckets underneath the traversal.
+        assertThrows(ConcurrentModificationException.class, () -> map.forEach(delivery -> {
+            if (delivery != null && delivery.getDeliveryId() == 5) {
+                map.remove(6);
+            }
+        }), "Removing from the tracker while forEach visits it should fail fast as the iterators do");
+    }
+
+    @Test
+    public void testForEachEntryFailsWhenEntryRemovedByAction() {
+        final UnsettledMap<DeliveryType> map = createMap(5, 10);
+
+        for (int i = 0; i < 25; i++) {
+            map.put(i, new DeliveryType(i));
+        }
+
+        assertThrows(ConcurrentModificationException.class, () -> map.forEach((deliveryId, delivery) -> {
+            if (deliveryId.intValue() == 5) {
+                map.remove(6);
+            }
+        }), "Removing from the tracker while forEach visits it should fail fast as the iterators do");
+    }
+
+    @Test
+    public void testRangedForEachFailsWhenEntryRemovedByAction() {
+        final UnsettledMap<DeliveryType> map = createMap(5, 10);
+
+        for (int i = 0; i < 25; i++) {
+            map.put(i, new DeliveryType(i));
+        }
+
+        assertThrows(ConcurrentModificationException.class, () -> map.forEach(0, 24, delivery -> {
+            if (delivery != null && delivery.getDeliveryId() == 5) {
+                map.remove(6);
+            }
+        }), "Removing from the tracker while a ranged forEach visits it should fail fast as the iterators do");
+    }
+
+    @Test
+    public void testRemoveEachFailsWhenEntryRemovedByAction() {
+        final UnsettledMap<DeliveryType> map = createMap(5, 10);
+
+        for (int i = 0; i < 25; i++) {
+            map.put(i, new DeliveryType(i));
+        }
+
+        // The ranged removal compacts the buckets once the action has run for the entries it
+        // covers, so a removal by the action itself leaves that compaction working on stale state.
+        assertThrows(ConcurrentModificationException.class, () -> map.removeEach(0, 24, delivery -> {
+            if (delivery != null && delivery.getDeliveryId() == 5) {
+                map.remove(6);
+            }
+        }), "Removing from the tracker while removeEach visits it should fail fast as the iterators do");
+    }
+
+    @Test
+    public void testForEachDeliveryFailsWhenEntryAddedByAction() {
+        final UnsettledMap<DeliveryType> map = createMap(5, 10);
+
+        for (int i = 0; i < 25; i++) {
+            map.put(i, new DeliveryType(i));
+        }
+
+        final AtomicBoolean added = new AtomicBoolean();
+
+        // Only one delivery is added so that the traversal cannot run away when no error is raised.
+        assertThrows(ConcurrentModificationException.class, () -> map.forEach(delivery -> {
+            if (added.compareAndSet(false, true)) {
+                map.put(1000, new DeliveryType(1000));
+            }
+        }), "Adding to the tracker while forEach visits it should fail fast as the iterators do");
+    }
+
+    @Test
+    public void testForEachActionsThatOnlyReadTheMapAreNotRejected() {
+        final UnsettledMap<DeliveryType> map = createMap(5, 10);
+
+        for (int i = 0; i < 25; i++) {
+            map.put(i, new DeliveryType(i));
+        }
+
+        final AtomicInteger visited = new AtomicInteger();
+        map.forEach(delivery -> {
+            assertNotNull(delivery);
+            assertNotNull(map.get(delivery.getDeliveryId()), "Delivery should still be tracked while visited");
+            assertTrue(map.containsKey(delivery.getDeliveryId()), "Delivery should still be tracked while visited");
+            visited.incrementAndGet();
+        });
+
+        assertEquals(25, visited.get(), "An action that only reads the tracker should visit every delivery");
+
+        final AtomicInteger rangedVisited = new AtomicInteger();
+        map.forEach(0, 24, delivery -> rangedVisited.incrementAndGet());
+
+        assertEquals(25, rangedVisited.get(), "An action that only reads the tracker should visit every delivery");
+        assertEquals(25, map.size(), "An action that only reads the tracker must not alter its contents");
+    }
+
+    @Test
+    public void testRangedAccessAfterRemovalsCompactEntriesIntoAdjacentBuckets() {
+        final UnsettledMap<DeliveryType> map = createMap(3, 10);
+
+        for (int i = 0; i < 30; i++) {
+            map.put(i, new DeliveryType(i));
+        }
+
+        // Removing a run that spans two buckets leaves those buckets partially empty which lets the
+        // remaining entries be merged into the neighboring buckets. The lowest and highest delivery
+        // IDs held by each bucket are re-derived as part of that work, and every search either skips
+        // an entire bucket or stops searching the buckets entirely based on those two values, so the
+        // merged buckets must still describe the entries they now hold.
+        final List<Integer> removed = new ArrayList<>();
+        map.removeEach(4, 15, (delivery) -> removed.add(delivery.getDeliveryId()));
+
+        assertEquals(12, removed.size(), "Every delivery of the range should have been removed: " + removed);
+        for (int i = 4; i <= 15; i++) {
+            assertTrue(removed.contains(i), "Delivery " + i + " is within the range and should have been removed");
+        }
+        assertEquals(18, map.size(), "Only the deliveries covered by the range should have been removed");
+
+        for (int i = 0; i < 30; i++) {
+            if (i >= 4 && i <= 15) {
+                assertNull(map.get(i), "Delivery " + i + " was within the range and should not be tracked");
+                assertFalse(map.containsKey(i), "Delivery " + i + " was within the range and should not be tracked");
+            } else {
+                assertNotNull(map.get(i), "Delivery " + i + " should still be tracked after the entries were merged");
+                assertTrue(map.containsKey(i), "Delivery " + i + " should still be tracked after the entries were merged");
+            }
+        }
+
+        // A range that covers both the entries that stayed put and the entries that were moved must
+        // visit each one exactly once, and a range of only settled deliveries must match nothing.
+        final List<Integer> visited = new ArrayList<>();
+        map.forEach(0, 29, (delivery) -> visited.add(delivery.getDeliveryId()));
+
+        assertEquals(18, visited.size(), "Ranged visit should cover every tracked delivery: " + visited);
+        for (int i = 0; i < 30; i++) {
+            if (i >= 4 && i <= 15) {
+                assertFalse(visited.contains(i), "Delivery " + i + " is no longer tracked: " + visited);
+            } else {
+                assertTrue(visited.contains(i), "Delivery " + i + " is within the range and should be visited: " + visited);
+            }
+        }
+
+        final List<Integer> settledRange = new ArrayList<>();
+        map.forEach(5, 15, (delivery) -> settledRange.add(delivery.getDeliveryId()));
+
+        assertTrue(settledRange.isEmpty(), "No delivery of the settled range should be visited: " + settledRange);
+
+        // Removing the entries that were moved into the first bucket pulls the highest delivery ID
+        // tracked by that bucket back again, which must not hide the entries that remain ahead of it.
+        final List<Integer> secondRemoval = new ArrayList<>();
+        map.removeEach(16, 19, (delivery) -> secondRemoval.add(delivery.getDeliveryId()));
+
+        assertEquals(4, secondRemoval.size(), "Every delivery of the range should have been removed: " + secondRemoval);
+        assertEquals(14, map.size(), "Only the deliveries covered by the range should have been removed");
+
+        for (int i = 0; i < 4; i++) {
+            assertNotNull(map.get(i), "Delivery " + i + " is outside the range and should still be tracked");
+        }
+        for (int i = 16; i < 20; i++) {
+            assertNull(map.get(i), "Delivery " + i + " is within the range and should not be tracked");
+        }
+        for (int i = 20; i < 30; i++) {
+            assertNotNull(map.get(i), "Delivery " + i + " is outside the range and should still be tracked");
+        }
+
+        final List<Integer> remaining = new ArrayList<>();
+        map.forEach(0, UnsignedInteger.MAX_VALUE.intValue(), (delivery) -> remaining.add(delivery.getDeliveryId()));
+
+        assertEquals(14, remaining.size(), "Ranged visit should cover every tracked delivery: " + remaining);
+
+        final List<Integer> lowSide = new ArrayList<>();
+        map.forEach(0, 19, (delivery) -> lowSide.add(delivery.getDeliveryId()));
+
+        assertEquals(4, lowSide.size(), "Only the deliveries below the settled range should be visited: " + lowSide);
+        for (int i = 0; i < 4; i++) {
+            assertTrue(lowSide.contains(i), "Delivery " + i + " is within the range and should be visited: " + lowSide);
+        }
+
+        final List<Integer> emptyLowSide = new ArrayList<>();
+        map.forEach(4, 19, (delivery) -> emptyLowSide.add(delivery.getDeliveryId()));
+
+        assertTrue(emptyLowSide.isEmpty(), "No delivery of the settled range should be visited: " + emptyLowSide);
+    }
+
+    @Test
+    public void testRangedForEachWhenWrappedRangeStraddlesTheOverflowOfAFullySettledEarlierGeneration() {
+        final UnsettledMap<DeliveryType> map = createMap(5, 50);
+
+        final int PRE_WRAP_LAST_DELIVERY_ID = UnsignedInteger.MAX_VALUE.intValue() - 15;
+        final int PRE_WRAP_FIRST_DELIVERY_ID = PRE_WRAP_LAST_DELIVERY_ID - 4;
+
+        // Deliveries of the generation that precedes the ID overflow, followed by the deliveries
+        // that follow the overflow, and then every delivery of the earlier generation is settled,
+        // which leaves the tracker holding only deliveries that follow the overflow.
+        for (int i = PRE_WRAP_FIRST_DELIVERY_ID; i <= PRE_WRAP_LAST_DELIVERY_ID; i++) {
+            map.put(i, new DeliveryType(i));
+        }
+        for (int i = 0; i < 11; i++) {
+            map.put(i, new DeliveryType(i));
+        }
+        for (int i = PRE_WRAP_FIRST_DELIVERY_ID; i <= PRE_WRAP_LAST_DELIVERY_ID; i++) {
+            assertNotNull(map.remove(i), "Delivery before the overflow should have been tracked: " + i);
+        }
+
+        assertEquals(11, map.size(), "Only the deliveries that follow the overflow should remain tracked");
+
+        // The range straddles the overflow point so it covers [first .. MAX_VALUE] and [0 .. 5].
+        // The earlier generation is gone and can match nothing in the first half, but the tracked
+        // deliveries all fall inside the second half of the range.
+        for (int i = 0; i <= 5; i++) {
+            assertTrue(map.containsKey(i), "Delivery " + i + " should be tracked before the ranged visit");
+        }
+
+        final List<Integer> visited = new ArrayList<>();
+        map.forEach(PRE_WRAP_LAST_DELIVERY_ID + 1, 5, (delivery) -> visited.add(delivery.getDeliveryId()));
+
+        assertEquals(6, visited.size(), "Ranged visit should cover the tracked deliveries that fall within"
+            + " the second half of the straddling range: " + visited);
+        for (int i = 0; i <= 5; i++) {
+            assertTrue(visited.contains(i), "Delivery " + i + " is within the range and should be visited: " + visited);
+        }
+        assertEquals(11, map.size(), "forEach should not alter the tracker contents");
+    }
+
+    @Test
+    public void testRemoveEachWhenWrappedRangeStraddlesTheOverflowOfAFullySettledEarlierGeneration() {
+        final UnsettledMap<DeliveryType> map = createMap(5, 50);
+
+        final int PRE_WRAP_LAST_DELIVERY_ID = UnsignedInteger.MAX_VALUE.intValue() - 15;
+        final int PRE_WRAP_FIRST_DELIVERY_ID = PRE_WRAP_LAST_DELIVERY_ID - 4;
+
+        // Same layout as the forEach test above: deliveries that follow the overflow are the only
+        // ones left unsettled once the generation that preceded the overflow was settled.
+        for (int i = PRE_WRAP_FIRST_DELIVERY_ID; i <= PRE_WRAP_LAST_DELIVERY_ID; i++) {
+            map.put(i, new DeliveryType(i));
+        }
+        for (int i = 0; i < 11; i++) {
+            map.put(i, new DeliveryType(i));
+        }
+        for (int i = PRE_WRAP_FIRST_DELIVERY_ID; i <= PRE_WRAP_LAST_DELIVERY_ID; i++) {
+            assertNotNull(map.remove(i), "Delivery before the overflow should have been tracked: " + i);
+        }
+
+        assertEquals(11, map.size(), "Only the deliveries that follow the overflow should remain tracked");
+
+        for (int i = 0; i <= 5; i++) {
+            assertTrue(map.containsKey(i), "Delivery " + i + " should be tracked before the ranged removal");
+        }
+
+        final List<Integer> removed = new ArrayList<>();
+        map.removeEach(PRE_WRAP_LAST_DELIVERY_ID + 1, 5, (delivery) -> removed.add(delivery.getDeliveryId()));
+
+        assertEquals(6, removed.size(), "Ranged removal should cover the tracked deliveries that fall within"
+            + " the second half of the straddling range: " + removed);
+        for (int i = 0; i <= 5; i++) {
+            assertNull(map.get(i), "Delivery " + i + " is within the range and should have been removed");
+        }
+        assertNotNull(map.get(6), "Deliveries past the end of the range should still be tracked");
+        assertEquals(5, map.size(), "Only the deliveries covered by the range should have been removed");
+    }
+
+    @Test
+    public void testForEachFirstRangeIsAllThatIsInMap() {
+        final UnsettledMap<DeliveryType> map = createMap(5, 50);
+
+        map.put(UnsignedInteger.valueOf(10), new DeliveryType(10));
+        map.put(UnsignedInteger.valueOf(12), new DeliveryType(12));
+        map.put(UnsignedInteger.valueOf(14), new DeliveryType(14));
+
+        final List<Integer> removed = new ArrayList<>();
+
+        map.forEach(10, 5, d -> removed.add(d.getDeliveryId()));
+
+        assertEquals(3, removed.size());
+        assertTrue(removed.contains(10));
+        assertTrue(removed.contains(12));
+        assertTrue(removed.contains(14));
+    }
+
+    @Test
+    public void testRemoveEachClearFirstRange() {
+        final UnsettledMap<DeliveryType> map = createMap(5, 50);
+
+        map.put(UnsignedInteger.valueOf(10), new DeliveryType(10));
+        map.put(UnsignedInteger.valueOf(12), new DeliveryType(12));
+        map.put(UnsignedInteger.valueOf(14), new DeliveryType(14));
+
+        final List<Integer> removed = new ArrayList<>();
+
+        map.removeEach(10, 5, d -> removed.add(d.getDeliveryId()));
+
+        assertEquals(3, removed.size());
+        assertTrue(removed.contains(10));
+        assertTrue(removed.contains(12));
+        assertTrue(removed.contains(14));
+    }
+
+    //----- Iterator removal when the delivery ID series rolls over the unsigned integer range
+
+    @Test
+    public void testValuesIteratorRemoveVisitsAllDeliveriesAfterIDOverflow() {
+        final UnsettledMap<DeliveryType> tracker = createMap(3, 4);
+
+        // One bucket of IDs that precede the ID series rolling over, then one bucket of IDs that
+        // follow the overflow, which leaves the two buckets with overlapping ID ranges.
+        for (int i = 10; i < 14; i++) {
+            tracker.put(i, new DeliveryType(i));
+        }
+        for (int i = 5; i < 9; i++) {
+            tracker.put(i, new DeliveryType(i));
+        }
+
+        assertEquals(8, tracker.size());
+
+        final List<Integer> visited = new ArrayList<>();
+        final Iterator<DeliveryType> iterator = tracker.values().iterator();
+
+        while (iterator.hasNext()) {
+            final DeliveryType delivery = iterator.next();
+
+            visited.add(delivery.getDeliveryId());
+
+            // ID 13 is the last entry of the first bucket, ID 5 the first entry of the second.
+            if (delivery.getDeliveryId() == 13 || delivery.getDeliveryId() == 5) {
+                iterator.remove();
+            }
+        }
+
+        assertEquals(Arrays.asList(10, 11, 12, 13, 5, 6, 7, 8), visited,
+            "Iteration should visit every delivery of both buckets: " + visited);
+        assertEquals(6, tracker.size(), "Both selected deliveries should have been removed");
+        assertNull(tracker.get(13), "Delivery removed from the bucket that precedes the overflow should be gone");
+        assertNull(tracker.get(5), "Delivery removed from the bucket that follows the overflow should be gone");
+
+        for (int i : new int[] { 10, 11, 12, 6, 7, 8 }) {
+            assertNotNull(tracker.get(i), "Delivery " + i + " should still be tracked");
+        }
+    }
+
+    @Test
+    public void testKeysIteratorRemoveVisitsAllDeliveriesAfterIDOverflow() {
+        final UnsettledMap<DeliveryType> tracker = createMap(3, 4);
+
+        // IDs 10..13 precede the ID series rolling over, IDs 5..8 follow it.
+        for (int i = 10; i < 14; i++) {
+            tracker.put(i, new DeliveryType(i));
+        }
+        for (int i = 5; i < 9; i++) {
+            tracker.put(i, new DeliveryType(i));
+        }
+
+        assertEquals(8, tracker.size());
+
+        final List<Integer> visited = new ArrayList<>();
+        final Iterator<UnsignedInteger> iterator = tracker.keySet().iterator();
+
+        while (iterator.hasNext()) {
+            final UnsignedInteger key = iterator.next();
+            visited.add(key.intValue());
+
+            if (key.intValue() == 13 || key.intValue() == 5) {
+                iterator.remove();
+            }
+        }
+
+        assertEquals(Arrays.asList(10, 11, 12, 13, 5, 6, 7, 8), visited,
+            "Iteration should visit every key of both buckets: " + visited);
+        assertEquals(6, tracker.size(), "Both selected keys should have been removed");
+        assertNull(tracker.get(13), "Key removed from the bucket that precedes the overflow should be gone");
+        assertNull(tracker.get(5), "Key removed from the bucket that follows the overflow should be gone");
+    }
+
+    @Test
+    public void testEntryIteratorRemoveVisitsAllDeliveriesAfterIDOverflow() {
+        final UnsettledMap<DeliveryType> tracker = createMap(3, 4);
+
+        // IDs 10..13 precede the ID series rolling over, IDs 5..8 follow it.
+        for (int i = 10; i < 14; i++) {
+            tracker.put(i, new DeliveryType(i));
+        }
+        for (int i = 5; i < 9; i++) {
+            tracker.put(i, new DeliveryType(i));
+        }
+
+        assertEquals(8, tracker.size());
+
+        final List<Integer> visited = new ArrayList<>();
+        final Iterator<Entry<UnsignedInteger, DeliveryType>> iterator = tracker.entrySet().iterator();
+        while (iterator.hasNext()) {
+            final Entry<UnsignedInteger, DeliveryType> entry = iterator.next();
+            visited.add(entry.getKey().intValue());
+
+            if (entry.getKey().intValue() == 13 || entry.getKey().intValue() == 5) {
+                iterator.remove();
+            }
+        }
+
+        assertEquals(Arrays.asList(10, 11, 12, 13, 5, 6, 7, 8), visited,
+            "Iteration should visit every entry of both buckets: " + visited);
+        assertEquals(6, tracker.size(), "Both selected entries should have been removed");
+        assertNull(tracker.get(13), "Entry removed from the bucket that precedes the overflow should be gone");
+        assertNull(tracker.get(5), "Entry removed from the bucket that follows the overflow should be gone");
+    }
+
+    @Test
+    public void testValuesRemoveIfRemovesDeliveriesOnBothSidesOfIDOverflow() {
+        final UnsettledMap<DeliveryType> tracker = createMap(3, 4);
+
+        // IDs 10..13 precede the ID series rolling over, IDs 5..8 follow it.
+        for (int i = 10; i < 14; i++) {
+            tracker.put(i, new DeliveryType(i));
+        }
+        for (int i = 5; i < 9; i++) {
+            tracker.put(i, new DeliveryType(i));
+        }
+
+        assertEquals(8, tracker.size());
+
+        final boolean modified = tracker.values().removeIf(delivery -> {
+            return delivery.getDeliveryId() < 6 || delivery.getDeliveryId() == 13;
+        });
+
+        assertTrue(modified, "Deliveries on both sides of the overflow should have been removed");
+
+        assertEquals(6, tracker.size(), "Two deliveries should have been removed");
+        assertNull(tracker.get(5), "Delivery removed before the overflow point should be gone");
+        assertNull(tracker.get(13), "Delivery removed after the overflow point should be gone");
+
+        for (int i : new int[] { 10, 11, 12, 6, 7, 8 }) {
+            assertNotNull(tracker.get(i), "Delivery " + i + " should still be tracked");
+        }
+    }
+
+    @Test
+    public void testValuesIteratorRemoveVisitsAllDeliveriesAfterIDOverflowWithDefaultBuckets() {
+        final UnsettledMap<DeliveryType> tracker = createMap(); // Default bucket size of 256
+
+        // Two exactly filled buckets, the second one starting below the ID the first one ended on.
+        final int firstIDBeforeOverflow = UnsignedInteger.MAX_VALUE.intValue() - 255;
+        for (int i = 0; i < 256; i++) {
+            tracker.put(firstIDBeforeOverflow + i, new DeliveryType(firstIDBeforeOverflow + i));
+        }
+        for (int i = 0; i < 256; i++) {
+            tracker.put(i, new DeliveryType(i));
+        }
+
+        assertEquals(512, tracker.size());
+
+        final int lastIDBeforeOverflow = UnsignedInteger.MAX_VALUE.intValue();
+        final Iterator<DeliveryType> iterator = tracker.values().iterator();
+
+        int visited = 0;
+
+        while (iterator.hasNext()) {
+            final DeliveryType delivery = iterator.next();
+            visited++;
+
+            if (delivery.getDeliveryId() == lastIDBeforeOverflow || delivery.getDeliveryId() == 0) {
+                iterator.remove();
+            }
+        }
+
+        assertEquals(512, visited, "Iteration should visit every delivery of both buckets");
+        assertEquals(510, tracker.size(), "Both selected deliveries should have been removed");
+        assertNull(tracker.get(lastIDBeforeOverflow), "Delivery removed before the overflow point should be gone");
+        assertNull(tracker.get(0), "Delivery removed after the overflow point should be gone");
+        assertNotNull(tracker.get(255), "Last delivery of the tracker should still be tracked");
+    }
+
+    @Test
+    public void testEveryTrackedDeliveryRemainsReachableAfterTheIDSeriesRollsBackwardsTwice() {
+        // Two deliveries per bucket so that a drained bucket is recycled between the additions.
+        final UnsettledMap<DeliveryType> tracker = createMap(3, 2);
+        final int nearMaxId = Integer.MAX_VALUE;
+
+        // The second and third delivery make the ID series roll backwards, which begins a new
+        // series of deliveries in its own bucket, the fourth joins the series that precedes it.
+        tracker.put(nearMaxId + 3, new DeliveryType(nearMaxId + 3));
+        tracker.put(nearMaxId + 1, new DeliveryType(nearMaxId + 1));
+        tracker.put(nearMaxId - 4, new DeliveryType(nearMaxId - 4));
+        tracker.put(nearMaxId - 1, new DeliveryType(nearMaxId - 1));
+
+        // Draining the bucket of the first rolled back series recycles it, and the next addition
+        // of that ID recycles the bucket it lands in when it is settled again.
+        assertNotNull(tracker.remove(nearMaxId + 1), "Delivery should have been tracked");
+        tracker.put(nearMaxId + 1, new DeliveryType(nearMaxId + 1));
+        assertNotNull(tracker.remove(nearMaxId + 1), "Delivery should have been tracked");
+
+        final List<DeliveryType> tracked = new ArrayList<>(tracker.values());
+        assertEquals(3, tracked.size(), "Every delivery that was not settled should still be tracked");
+
+        // The tracker still knows the deliveries are unsettled so each of them must remain
+        // reachable, otherwise no disposition can ever settle them.
+        for (DeliveryType delivery : tracked) {
+            final int deliveryId = delivery.getDeliveryId();
+            final String name = "delivery " + UnsignedInteger.valueOf(deliveryId);
+            assertNotNull(tracker.get(deliveryId), "The " + name + " should be reachable by its ID");
+            assertTrue(tracker.containsKey(deliveryId), "The " + name + " should be tracked by its ID");
+            assertEquals(delivery, tracker.remove(deliveryId), "The " + name + " should be settleable");
+        }
+
+        assertTrue(tracker.isEmpty(), "Settling every tracked delivery should empty the tracker");
     }
 }

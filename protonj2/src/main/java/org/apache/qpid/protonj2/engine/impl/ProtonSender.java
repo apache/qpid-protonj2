@@ -19,7 +19,7 @@ package org.apache.qpid.protonj2.engine.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.function.Predicate;
 
@@ -31,7 +31,6 @@ import org.apache.qpid.protonj2.engine.Sender;
 import org.apache.qpid.protonj2.engine.Session;
 import org.apache.qpid.protonj2.engine.util.DeliveryIdTracker;
 import org.apache.qpid.protonj2.engine.util.UnsettledMap;
-import org.apache.qpid.protonj2.types.UnsignedInteger;
 import org.apache.qpid.protonj2.types.transport.Attach;
 import org.apache.qpid.protonj2.types.transport.DeliveryState;
 import org.apache.qpid.protonj2.types.transport.Detach;
@@ -116,29 +115,33 @@ public class ProtonSender extends ProtonLink<Sender> implements Sender {
         return this;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Sender disposition(Predicate<OutgoingDelivery> filter, DeliveryState state, boolean settle) {
         checkLinkOperable("Cannot apply disposition");
         Objects.requireNonNull(filter, "Supplied filter cannot be null");
 
-        List<UnsignedInteger> toRemove = settle ? new ArrayList<>() : Collections.EMPTY_LIST;
+        // Walk the unsettled deliveries directly and drop settled entries through the iterator as
+        // that avoids boxing every delivery id just to visit the entries and then searching the map
+        // a second time for each delivery that is removed when it is settled.
+        Iterator<ProtonOutgoingDelivery> unsettledDeliveries = unsettled.values().iterator();
 
-        unsettled.forEach((deliveryId, delivery) -> {
+        while (unsettledDeliveries.hasNext()) {
+            ProtonOutgoingDelivery delivery = unsettledDeliveries.next();
+
             if (filter.test(delivery)) {
                 if (state != null) {
                     delivery.localState(state);
                 }
                 if (settle) {
                     delivery.locallySettled();
-                    toRemove.add(deliveryId);
                 }
-                sessionWindow.processDisposition(this, delivery);
-            }
-        });
 
-        if (!toRemove.isEmpty()) {
-            toRemove.forEach(deliveryId -> unsettled.remove(deliveryId));
+                sessionWindow.processDisposition(this, delivery);
+
+                if (settle) {
+                    unsettledDeliveries.remove();
+                }
+            }
         }
 
         return this;
