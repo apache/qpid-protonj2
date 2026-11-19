@@ -17,9 +17,12 @@
 package org.apache.qpid.protonj2.client.impl;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.net.URI;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.qpid.protonj2.client.Client;
@@ -30,6 +33,8 @@ import org.apache.qpid.protonj2.client.Receiver;
 import org.apache.qpid.protonj2.client.ReceiverOptions;
 import org.apache.qpid.protonj2.client.Session;
 import org.apache.qpid.protonj2.client.exceptions.ClientConnectionRemotelyClosedException;
+import org.apache.qpid.protonj2.client.exceptions.ClientOperationTimedOutException;
+import org.apache.qpid.protonj2.client.exceptions.ClientResourceRemotelyClosedException;
 import org.apache.qpid.protonj2.client.test.ImperativeClientTestCase;
 import org.apache.qpid.protonj2.test.driver.ProtonTestServer;
 import org.apache.qpid.protonj2.types.messaging.AmqpValue;
@@ -304,6 +309,156 @@ class ReconnectReceiverTest extends ImperativeClientTestCase {
             connection.close();
 
             assertNotNull(delivery);
+        }
+    }
+
+    @Test
+    public void testClosedReceiverNotRecreatedOnReconnectWhenClosePending() throws Exception {
+        try (ProtonTestServer firstPeer = new ProtonTestServer();
+             ProtonTestServer finalPeer = new ProtonTestServer()) {
+
+            firstPeer.expectSASLAnonymousConnect();
+            firstPeer.expectOpen().respond();
+            firstPeer.expectBegin().respond();
+            firstPeer.expectAttach().ofReceiver().withSource().withAddress("test").and().respond();
+            firstPeer.expectFlow().withLinkCredit(10);
+            firstPeer.expectDetach().withClosed(true);
+            firstPeer.dropAfterLastHandler(10);
+            firstPeer.start();
+
+            finalPeer.expectSASLAnonymousConnect();
+            finalPeer.expectOpen().respond();
+            finalPeer.expectBegin().respond();
+            finalPeer.start();
+
+            final URI primaryURI = firstPeer.getServerURI();
+            final URI backupURI = finalPeer.getServerURI();
+
+            ConnectionOptions options = new ConnectionOptions();
+            options.reconnectOptions().reconnectEnabled(true);
+            options.reconnectOptions().addReconnectLocation(backupURI.getHost(), backupURI.getPort());
+
+            Client container = Client.create();
+            Connection connection = container.connect(primaryURI.getHost(), primaryURI.getPort(), options);
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test", new ReceiverOptions().creditWindow(10));
+
+            receiver.openFuture().get();
+
+            receiver.close();
+
+            firstPeer.waitForScriptToComplete();
+            finalPeer.waitForScriptToComplete();
+
+            finalPeer.expectEnd().respond();
+            finalPeer.expectClose().respond();
+
+            session.close();
+            connection.close();
+
+            finalPeer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testClosedReceiverNotRecreatedOnReconnectWhenCloseTimedOut() throws Exception {
+        try (ProtonTestServer firstPeer = new ProtonTestServer();
+             ProtonTestServer finalPeer = new ProtonTestServer()) {
+
+            firstPeer.expectSASLAnonymousConnect();
+            firstPeer.expectOpen().respond();
+            firstPeer.expectBegin().respond();
+            firstPeer.expectAttach().ofReceiver().withSource().withAddress("test").and().respond();
+            firstPeer.expectFlow().withLinkCredit(10);
+            firstPeer.expectDetach().withClosed(true);
+            firstPeer.start();
+
+            finalPeer.expectSASLAnonymousConnect();
+            finalPeer.expectOpen().respond();
+            finalPeer.expectBegin().respond();
+            finalPeer.start();
+
+            final URI primaryURI = firstPeer.getServerURI();
+            final URI backupURI = finalPeer.getServerURI();
+
+            ConnectionOptions options = new ConnectionOptions();
+            options.reconnectOptions().reconnectEnabled(true);
+            options.reconnectOptions().addReconnectLocation(backupURI.getHost(), backupURI.getPort());
+
+            Client container = Client.create();
+            Connection connection = container.connect(primaryURI.getHost(), primaryURI.getPort(), options);
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test", new ReceiverOptions().creditWindow(10).closeTimeout(250));
+
+            receiver.openFuture().get();
+
+            try {
+                receiver.closeAsync().get();
+                fail("Close should have timed out");
+            } catch (ExecutionException ex) {
+                // Expected timeout
+                assertTrue(ex.getCause() instanceof ClientOperationTimedOutException);
+            }
+
+            firstPeer.waitForScriptToComplete();
+            firstPeer.dropConnection();
+
+            finalPeer.waitForScriptToComplete();
+
+            finalPeer.expectEnd().respond();
+            finalPeer.expectClose().respond();
+
+            session.close();
+            connection.close();
+
+            finalPeer.waitForScriptToComplete();
+        }
+    }
+
+    @Test
+    public void testOpenReceiverNotRecreatedOnReconnectWhenParentSessionClosePending() throws Exception {
+        try (ProtonTestServer firstPeer = new ProtonTestServer();
+             ProtonTestServer finalPeer = new ProtonTestServer()) {
+
+            firstPeer.expectSASLAnonymousConnect();
+            firstPeer.expectOpen().respond();
+            firstPeer.expectBegin().respond();
+            firstPeer.expectAttach().ofReceiver().withSource().withAddress("test").and().respond();
+            firstPeer.expectFlow().withLinkCredit(10);
+            firstPeer.expectEnd();
+            firstPeer.dropAfterLastHandler(10);
+            firstPeer.start();
+
+            finalPeer.expectSASLAnonymousConnect();
+            finalPeer.expectOpen().respond();
+            finalPeer.start();
+
+            final URI primaryURI = firstPeer.getServerURI();
+            final URI backupURI = finalPeer.getServerURI();
+
+            ConnectionOptions options = new ConnectionOptions();
+            options.reconnectOptions().reconnectEnabled(true);
+            options.reconnectOptions().addReconnectLocation(backupURI.getHost(), backupURI.getPort());
+
+            Client container = Client.create();
+            Connection connection = container.connect(primaryURI.getHost(), primaryURI.getPort(), options);
+            Session session = connection.openSession();
+            Receiver receiver = session.openReceiver("test", new ReceiverOptions().creditWindow(10));
+
+            receiver.openFuture().get();
+
+            session.close();
+
+            firstPeer.waitForScriptToComplete();
+            finalPeer.waitForScriptToComplete();
+
+            assertThrows(ClientResourceRemotelyClosedException.class, () -> receiver.receive());
+            assertNotNull(receiver.closeAsync().get(5, TimeUnit.SECONDS));
+
+            finalPeer.expectClose().respond();
+            connection.close();
+
+            finalPeer.waitForScriptToComplete();
         }
     }
 }
